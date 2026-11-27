@@ -7,7 +7,6 @@ import {
   Search,
   PlusCircle,
   CheckCircle,
-  Dog,
   HelpCircle,
   Bell,
   User,
@@ -18,7 +17,8 @@ import {
   Shield,
   LayoutDashboard,
   MapPin,
-  Sparkles
+  Sparkles,
+  Map as MapIcon
 } from 'lucide-react';
 
 export const Navbar = () => {
@@ -66,15 +66,15 @@ export const Navbar = () => {
             </Link>
 
             <Link
-              to="/pets"
+              to="/map"
               className={`px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors ${
-                isActive('/pets')
+                isActive('/map')
                   ? 'bg-brand-50 text-brand-600 dark:bg-brand-950/60 dark:text-brand-400 font-semibold'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              <Dog className="w-4 h-4 text-amber-500" />
-              Pets
+              <MapIcon className="w-4 h-4 text-emerald-500" />
+              Map
             </Link>
 
             <Link
@@ -273,12 +273,12 @@ export const Navbar = () => {
             </Link>
 
             <Link
-              to="/pets"
+              to="/map"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
             >
-              <Dog className="w-4 h-4 text-amber-500" />
-              Pets Recovery Mode
+              <MapIcon className="w-4 h-4 text-emerald-500" />
+              Campus Map
             </Link>
 
             <Link

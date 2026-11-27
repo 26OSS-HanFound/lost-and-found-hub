@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Heart, Shield, Compass, Sparkles, Dog, HelpCircle } from 'lucide-react';
+import { Search, Heart, Shield, Compass, Sparkles, HelpCircle, Map as MapIcon } from 'lucide-react';
 
 export const Footer = () => {
   return (
@@ -39,8 +39,8 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/pets" className="hover:text-brand-400 transition-colors flex items-center gap-1.5">
-                  <Dog className="w-3.5 h-3.5 text-amber-400" /> Pet Recovery Hub
+                <Link to="/map" className="hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                  <MapIcon className="w-3.5 h-3.5 text-emerald-400" /> Campus Map
                 </Link>
               </li>
               <li>

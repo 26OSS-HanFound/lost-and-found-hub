@@ -9,6 +9,27 @@ export const STATUSES = {
   REUNITED: { id: 'reunited', label: 'Reunited', badgeClass: 'badge-reunited', color: '#0d9488', icon: 'Heart' }
 };
 
+// 탐색 필터용 단순화된 상태 그룹
+// 내부 상태(8단계)는 그대로 두고, 사용자에게는 2가지로만 보여줍니다.
+export const STATUS_FILTER_GROUPS = [
+  {
+    id: 'active',
+    label: 'Still Searching / In Custody',
+    statuses: ['lost', 'spotted', 'found', 'matched', 'verified', 'handover'],
+  },
+  {
+    id: 'resolved',
+    label: 'Returned to Owner',
+    statuses: ['returned', 'reunited'],
+  },
+];
+
+export const matchesStatusGroup = (status, groupId) => {
+  if (!groupId || groupId === 'all') return true;
+  const group = STATUS_FILTER_GROUPS.find((g) => g.id === groupId);
+  return group ? group.statuses.includes(status) : true;
+};
+
 export const TRAIL_STAGES = [
   { key: 'lost', label: 'Lost', desc: 'Item reported missing by owner' },
   { key: 'spotted', label: 'Spotted', desc: 'Sighting reported by community helper' },
