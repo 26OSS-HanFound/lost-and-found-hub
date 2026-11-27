@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useLostFound } from '../../context/LostFoundContext';
 import { useAuth } from '../../context/AuthContext';
 import { CATEGORIES } from '../../constants/categories';
+import { BUILDINGS, getBuildingById } from '../../constants/locations';
+import { COLORS } from '../../constants/colors';
 import { Button } from '../common/Button';
 import {
   Smartphone,
@@ -45,7 +47,9 @@ export const ReportLostWizard = () => {
   const [image, setImage] = useState('');
 
   const [area, setArea] = useState('');
-  const [city, setCity] = useState('Chennai');
+  const [building, setBuilding] = useState('');
+  // 기존 화면들이 location.city를 표시하므로 건물 이름을 city로 함께 저장
+  const city = building ? getBuildingById(building).label : '';
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState('10:00 AM');
 
@@ -98,8 +102,8 @@ export const ReportLostWizard = () => {
         return false;
       }
     } else if (currentStep === 3) {
-      if (!area.trim() || !city.trim()) {
-        setValidationError('Area and City are required.');
+      if (!building || !area.trim()) {
+        setValidationError('Building and specific spot are required.');
         return false;
       }
     } else if (currentStep === 4) {
@@ -148,6 +152,7 @@ export const ReportLostWizard = () => {
       },
       location: {
         area,
+        building,
         city,
         latitude: 12.9716,
         longitude: 77.5946
@@ -293,13 +298,18 @@ export const ReportLostWizard = () => {
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Color
                 </label>
-                <input
-                  type="text"
+                <select
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  placeholder="e.g. Natural Titanium, Black"
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white"
-                />
+                >
+                  <option value="">Select a color</option>
+                  {COLORS.map((c) => (
+                    <option key={c.id} value={c.label}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -348,26 +358,31 @@ export const ReportLostWizard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Specific Area / Venue *
+                  Building *
+                </label>
+                <select
+                  value={building}
+                  onChange={(e) => setBuilding(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="">Select a building</option>
+                  {BUILDINGS.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Specific Spot / Room *
                 </label>
                 <input
                   type="text"
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
-                  placeholder="e.g. SRM Campus Dining Hall, Gate 3"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  City *
-                </label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g. Chennai, Bengaluru, Delhi"
+                  placeholder="e.g. 3F Lounge, Room 305"
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500"
                 />
               </div>
@@ -379,7 +394,7 @@ export const ReportLostWizard = () => {
                 <MapPin className="w-4 h-4 text-red-500" /> Map Location Visualizer Pin
               </div>
               <p className="text-[11px] text-slate-500">
-                Coordinates auto-calibrated to {city} ({area || 'Central Area'}).
+                Coordinates auto-calibrated to {city || 'campus'} ({area || 'Central Area'}).
               </p>
             </div>
           </div>

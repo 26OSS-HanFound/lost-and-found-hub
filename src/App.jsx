@@ -16,7 +16,7 @@ import { ReportLost } from './pages/ReportLost';
 import { ReportFound } from './pages/ReportFound';
 import { ItemDetail } from './pages/ItemDetail';
 import { MissingTrailPage } from './pages/MissingTrailPage';
-import { Pets } from './pages/Pets';
+import { CampusMap } from './pages/CampusMap';
 import { MysteryItems } from './pages/MysteryItems';
 import { Dashboard } from './pages/Dashboard';
 import { MyReports } from './pages/MyReports';
@@ -45,7 +45,7 @@ export default function App() {
                     <Route path="/report-found" element={<ReportFound />} />
                     <Route path="/item/:id" element={<ItemDetail />} />
                     <Route path="/trail/:id" element={<MissingTrailPage />} />
-                    <Route path="/pets" element={<Pets />} />
+                    <Route path="/map" element={<CampusMap />} />
                     <Route path="/mystery-items" element={<MysteryItems />} />
                     
                     <Route

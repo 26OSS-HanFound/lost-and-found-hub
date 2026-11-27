@@ -7,6 +7,8 @@ import { ItemCard } from '../components/reports/ItemCard';
 import { MapVisualizer } from '../components/reports/MapVisualizer';
 import { SightingModal } from '../components/forms/SightingModal';
 import { EmptyState } from '../components/common/EmptyState';
+import { matchesStatusGroup } from '../constants/statuses';
+import { matchesColor } from '../constants/colors';
 import { LayoutGrid, List, MapPin } from 'lucide-react';
 
 export const Explore = () => {
@@ -21,18 +23,13 @@ export const Explore = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedCity, setSelectedCity] = useState('all');
+  const [selectedBuilding, setSelectedBuilding] = useState('all');
+  const [selectedColor, setSelectedColor] = useState('all');
   const [selectedDateFilter, setSelectedDateFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list' | 'map'
 
   const [activeSightingReport, setActiveSightingReport] = useState(null);
-
-  // Available Cities
-  const availableCities = useMemo(() => {
-    const cities = new Set(reports.map((r) => r.location?.city).filter(Boolean));
-    return Array.from(cities);
-  }, [reports]);
 
   // Filter & Search Logic
   const filteredReports = useMemo(() => {
@@ -44,13 +41,16 @@ export const Explore = () => {
         // Category filter
         if (selectedCategory !== 'all' && report.category !== selectedCategory) return false;
 
-        // Status filter
-        if (selectedStatus !== 'all' && report.status !== selectedStatus) return false;
+        // Status filter (보관 중 / 주인 찾음 그룹 단위)
+        if (!matchesStatusGroup(report.status, selectedStatus)) return false;
 
-        // City filter
-        if (selectedCity !== 'all' && report.location?.city !== selectedCity) return false;
+        // Building filter
+        if (selectedBuilding !== 'all' && report.location?.building !== selectedBuilding) return false;
 
-        // Date Filter
+        // Color filter
+        if (!matchesColor(report.item?.color, selectedColor)) return false;
+
+        // Date Filter — 분실/습득한 날짜(report.date) 기준, 없으면 등록일
         if (selectedDateFilter !== 'all') {
           const reportTime = new Date(report.date || report.createdAt).getTime();
           const now = Date.now();
@@ -81,23 +81,17 @@ export const Explore = () => {
       .sort((a, b) => {
         if (sortBy === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
         if (sortBy === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
-        if (sortBy === 'updated') return new Date(b.updatedAt) - new Date(a.updatedAt);
-        if (sortBy === 'nearest') {
-          // Sort by location area / city alphabetically as simulated proximity
-          const locA = `${a.location?.city || ''} ${a.location?.area || ''}`;
-          const locB = `${b.location?.city || ''} ${b.location?.area || ''}`;
-          return locA.localeCompare(locB);
-        }
         return 0;
       });
-  }, [reports, selectedType, selectedCategory, selectedStatus, selectedCity, selectedDateFilter, searchQuery, sortBy]);
+  }, [reports, selectedType, selectedCategory, selectedStatus, selectedBuilding, selectedColor, selectedDateFilter, searchQuery, sortBy]);
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedType('all');
     setSelectedCategory('all');
     setSelectedStatus('all');
-    setSelectedCity('all');
+    setSelectedBuilding('all');
+    setSelectedColor('all');
     setSelectedDateFilter('all');
     setSortBy('newest');
     setSearchParams({});
@@ -172,13 +166,14 @@ export const Explore = () => {
             setSelectedCategory={setSelectedCategory}
             selectedStatus={selectedStatus}
             setSelectedStatus={setSelectedStatus}
-            selectedCity={selectedCity}
-            setSelectedCity={setSelectedCity}
+            selectedBuilding={selectedBuilding}
+            setSelectedBuilding={setSelectedBuilding}
+            selectedColor={selectedColor}
+            setSelectedColor={setSelectedColor}
             selectedDateFilter={selectedDateFilter}
             setSelectedDateFilter={setSelectedDateFilter}
             sortBy={sortBy}
             setSortBy={setSortBy}
-            availableCities={availableCities}
             onReset={handleResetFilters}
           />
         </div>

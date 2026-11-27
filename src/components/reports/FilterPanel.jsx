@@ -1,7 +1,9 @@
 import React from 'react';
 import { CATEGORIES } from '../../constants/categories';
-import { STATUSES } from '../../constants/statuses';
-import { Filter, RotateCcw, Calendar, ArrowUpDown, MapPin } from 'lucide-react';
+import { STATUS_FILTER_GROUPS } from '../../constants/statuses';
+import { BUILDINGS } from '../../constants/locations';
+import { COLORS } from '../../constants/colors';
+import { Filter, RotateCcw, Calendar, ArrowUpDown, MapPin, Palette } from 'lucide-react';
 
 export const FilterPanel = ({
   selectedType,
@@ -10,13 +12,14 @@ export const FilterPanel = ({
   setSelectedCategory,
   selectedStatus,
   setSelectedStatus,
-  selectedCity,
-  setSelectedCity,
+  selectedBuilding,
+  setSelectedBuilding,
+  selectedColor,
+  setSelectedColor,
   selectedDateFilter,
   setSelectedDateFilter,
   sortBy,
   setSortBy,
-  availableCities = [],
   onReset
 }) => {
   return (
@@ -79,7 +82,7 @@ export const FilterPanel = ({
       {/* Status Filter */}
       <div>
         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-          Lifecycle Status
+          Status
         </label>
         <select
           value={selectedStatus}
@@ -87,41 +90,59 @@ export const FilterPanel = ({
           className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
         >
           <option value="all">All Statuses</option>
-          {Object.values(STATUSES).map((st) => (
-            <option key={st.id} value={st.id}>
-              {st.label}
+          {STATUS_FILTER_GROUPS.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.label}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Location / City Filter */}
-      {availableCities.length > 0 && (
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 text-brand-500" />
-            Location / City
-          </label>
-          <select
-            value={selectedCity}
-            onChange={(e) => setSelectedCity(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="all">All Locations</option>
-            {availableCities.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Campus Building Filter */}
+      <div>
+        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+          <MapPin className="w-3.5 h-3.5 text-brand-500" />
+          Building
+        </label>
+        <select
+          value={selectedBuilding}
+          onChange={(e) => setSelectedBuilding(e.target.value)}
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+        >
+          <option value="all">All Buildings</option>
+          {BUILDINGS.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      {/* Date Filter */}
+      {/* Color Filter */}
+      <div>
+        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+          <Palette className="w-3.5 h-3.5 text-brand-500" />
+          Color
+        </label>
+        <select
+          value={selectedColor}
+          onChange={(e) => setSelectedColor(e.target.value)}
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+        >
+          <option value="all">All Colors</option>
+          {COLORS.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Date Filter (분실/습득한 날짜 기준) */}
       <div>
         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
           <Calendar className="w-3.5 h-3.5 text-brand-500" />
-          Date Reported
+          Date Lost / Found
         </label>
         <select
           value={selectedDateFilter}
@@ -149,8 +170,6 @@ export const FilterPanel = ({
         >
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
-          <option value="nearest">Nearest Location</option>
-          <option value="updated">Recently Updated</option>
         </select>
       </div>
     </div>
