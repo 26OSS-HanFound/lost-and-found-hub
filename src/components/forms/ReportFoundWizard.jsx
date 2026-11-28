@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLostFound } from '../../context/LostFoundContext';
 import { useAuth } from '../../context/AuthContext';
@@ -29,6 +29,8 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
+const placeSearchCache = new Map();
+
 export const ReportFoundWizard = () => {
   const navigate = useNavigate();
   const { addReport } = useLostFound();
@@ -49,6 +51,12 @@ export const ReportFoundWizard = () => {
   const [building, setBuilding] = useState('');
   // 기존 화면들이 location.city를 표시하므로 건물 이름을 city로 함께 저장
   const city = building ? getBuildingById(building).label : '';
+  const [placeQuery, setPlaceQuery] = useState('');
+  const [placeResults, setPlaceResults] = useState([]);
+  const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
+  const [placeSearchError, setPlaceSearchError] = useState('');
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const lastPlaceRequestAt = useRef(0);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState('11:00 AM');
 
@@ -81,6 +89,81 @@ export const ReportFoundWizard = () => {
       reader.onloadend = () => setImage(reader.result);
       reader.readAsDataURL(file);
     }
+  };
+
+  const handlePlaceSearch = async () => {
+    const query = placeQuery.trim();
+    if (!query) {
+      setPlaceSearchError('Enter a place name to search.');
+      setPlaceResults([]);
+      return;
+    }
+
+    const cacheKey = query.toLocaleLowerCase();
+    const cachedResults = placeSearchCache.get(cacheKey);
+    if (cachedResults) {
+      setPlaceResults(cachedResults);
+      setPlaceSearchError(cachedResults.length ? '' : 'No places were found. Try a longer search phrase.');
+      return;
+    }
+
+    if (Date.now() - lastPlaceRequestAt.current < 1000) {
+      setPlaceSearchError('Please wait a moment before searching again.');
+      return;
+    }
+
+    lastPlaceRequestAt.current = Date.now();
+    setIsSearchingPlaces(true);
+    setPlaceSearchError('');
+    setPlaceResults([]);
+
+    const params = new URLSearchParams({
+      q: query,
+      format: 'jsonv2',
+      limit: '5',
+      addressdetails: '1',
+      'accept-language': 'ko'
+    });
+
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+        referrerPolicy: 'strict-origin-when-cross-origin'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Location search failed with status ${response.status}.`);
+      }
+
+      const results = await response.json();
+      if (!Array.isArray(results)) {
+        throw new Error('The location service returned an unexpected response.');
+      }
+
+      placeSearchCache.set(cacheKey, results);
+      setPlaceResults(results);
+      if (results.length === 0) {
+        setPlaceSearchError('No places were found. Try a longer search phrase.');
+      }
+    } catch {
+      setPlaceSearchError('Could not search places right now. You can retry or select a campus building manually.');
+    } finally {
+      setIsSearchingPlaces(false);
+    }
+  };
+
+  const handleSelectPlace = (place) => {
+    const locationName = place.name || place.display_name?.split(',')[0] || 'Selected place';
+    setSelectedPlace({
+      name: locationName,
+      displayName: place.display_name || locationName,
+      latitude: Number(place.lat),
+      longitude: Number(place.lon),
+      osmId: place.osm_id ? String(place.osm_id) : '',
+      osmType: place.osm_type || ''
+    });
+    setPlaceResults([]);
+    setPlaceSearchError('');
   };
 
   const validateCurrentStep = () => {
@@ -143,8 +226,13 @@ export const ReportFoundWizard = () => {
         area,
         building,
         city,
-        latitude: 12.9716,
-        longitude: 77.5946
+        latitude: selectedPlace?.latitude ?? null,
+        longitude: selectedPlace?.longitude ?? null,
+        placeName: selectedPlace?.name ?? null,
+        displayName: selectedPlace?.displayName ?? null,
+        osmId: selectedPlace?.osmId ?? null,
+        osmType: selectedPlace?.osmType ?? null,
+        source: selectedPlace ? 'OpenStreetMap Nominatim' : null
       },
       date,
       time,
@@ -339,6 +427,79 @@ export const ReportFoundWizard = () => {
             <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
               Where Was It Found?
             </h2>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Search a campus reference place with OpenStreetMap
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="search"
+                  value={placeQuery}
+                  onChange={(e) => {
+                    setPlaceQuery(e.target.value);
+                    setPlaceResults([]);
+                    setSelectedPlace(null);
+                    setPlaceSearchError('');
+                  }}
+                  placeholder="e.g. 한동대학교, 포항, 대한민국"
+                  className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                />
+                <button
+                  type="button"
+                  onClick={handlePlaceSearch}
+                  disabled={isSearchingPlaces || !placeQuery.trim()}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSearchingPlaces ? 'Searching…' : 'Search place'}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Select the campus reference result, then choose the exact building and spot below.
+              </p>
+              <p className="text-[11px] text-slate-500">
+                Place data ©{' '}
+                <a
+                  href="https://www.openstreetmap.org/copyright"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline hover:text-emerald-600"
+                >
+                  OpenStreetMap contributors
+                </a>
+              </p>
+
+              {placeSearchError && (
+                <p role="status" className="text-xs text-amber-700 dark:text-amber-300">
+                  {placeSearchError}
+                </p>
+              )}
+
+              {placeResults.length > 0 && (
+                <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-2" aria-label="Place search results">
+                  {placeResults.map((place) => {
+                    const resultName = place.name || place.display_name?.split(',')[0] || 'Place result';
+                    return (
+                      <button
+                        key={`${place.osm_type || 'place'}-${place.osm_id || place.place_id}`}
+                        type="button"
+                        onClick={() => handleSelectPlace(place)}
+                        className="w-full rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        <span className="block text-xs font-semibold text-slate-800 dark:text-slate-100">{resultName}</span>
+                        <span className="block mt-1 text-[11px] text-slate-500 dark:text-slate-400">{place.display_name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {selectedPlace && (
+                <p className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 p-2 text-[11px] text-emerald-800 dark:text-emerald-200">
+                  Selected campus reference: {selectedPlace.displayName} ({selectedPlace.latitude}, {selectedPlace.longitude})
+                </p>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
